@@ -1,0 +1,158 @@
+name: Compile and Deploy All Contracts to Casper Testnet
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust with wasm32 target
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          override: true
+
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install cargo-odra
+        run: cargo install cargo-odra --locked
+
+      - name: Install casper-client
+        run: cargo install casper-client --locked
+
+      - name: Compile casperflow contract
+        run: cargo odra build -b casper
+        working-directory: ./contracts/casperflow
+
+      - name: Compile reputation contract
+        run: cargo odra build -b casper
+        working-directory: ./contracts/reputation
+
+      - name: Download official CEP-18 wasm
+        run: |
+          curl -L \
+            https://github.com/casper-ecosystem/cep18/releases/download/v1.1.2/cep18.wasm \
+            -o ./cep18.wasm
+          ls -lh ./cep18.wasm
+
+      - name: Restore secret key from GitHub Secret
+        run: |
+          echo "${{ secrets.CSPR_SECRET_KEY_B64 }}" | base64 -d > /tmp/secret_key.pem
+          chmod 600 /tmp/secret_key.pem
+
+      - name: Deploy casperflow contract
+        id: deploy_casperflow
+        run: |
+          DEPLOY_HASH=$(casper-client put-deploy \
+            --node-address "${{ secrets.CSPR_NODE_URL }}" \
+            --chain-name "${{ secrets.CSPR_CHAIN_NAME }}" \
+            --secret-key /tmp/secret_key.pem \
+            --payment-amount 150000000000 \
+            --session-path ./contracts/casperflow/wasm/casperflow.wasm \
+            | jq -r '.result.deploy_hash')
+          echo "deploy_hash=$DEPLOY_HASH" >> $GITHUB_OUTPUT
+          echo "CasperFlow deploy hash: $DEPLOY_HASH"
+
+      - name: Wait for casperflow finality
+        run: sleep 60
+
+      - name: Get casperflow contract hash
+        id: hash_casperflow
+        run: |
+          RESULT=$(casper-client get-deploy \
+            --node-address "${{ secrets.CSPR_NODE_URL }}" \
+            ${{ steps.deploy_casperflow.outputs.deploy_hash }})
+          CONTRACT_HASH=$(echo $RESULT | jq -r \
+            '.result.execution_results[0].result.Success.effect.transforms[] | select(.transform | has("WriteContract")) | .key')
+          echo "contract_hash=$CONTRACT_HASH" >> $GITHUB_OUTPUT
+          echo "CasperFlow contract hash: $CONTRACT_HASH"
+
+      - name: Deploy reputation contract
+        id: deploy_reputation
+        run: |
+          DEPLOY_HASH=$(casper-client put-deploy \
+            --node-address "${{ secrets.CSPR_NODE_URL }}" \
+            --chain-name "${{ secrets.CSPR_CHAIN_NAME }}" \
+            --secret-key /tmp/secret_key.pem \
+            --payment-amount 150000000000 \
+            --session-path ./contracts/reputation/wasm/reputation.wasm \
+            | jq -r '.result.deploy_hash')
+          echo "deploy_hash=$DEPLOY_HASH" >> $GITHUB_OUTPUT
+          echo "Reputation deploy hash: $DEPLOY_HASH"
+
+      - name: Wait for reputation finality
+        run: sleep 60
+
+      - name: Get reputation contract hash
+        id: hash_reputation
+        run: |
+          RESULT=$(casper-client get-deploy \
+            --node-address "${{ secrets.CSPR_NODE_URL }}" \
+            ${{ steps.deploy_reputation.outputs.deploy_hash }})
+          CONTRACT_HASH=$(echo $RESULT | jq -r \
+            '.result.execution_results[0].result.Success.effect.transforms[] | select(.transform | has("WriteContract")) | .key')
+          echo "contract_hash=$CONTRACT_HASH" >> $GITHUB_OUTPUT
+          echo "Reputation contract hash: $CONTRACT_HASH"
+
+      - name: Deploy CEP-18 token contract
+        id: deploy_cep18
+        run: |
+          DEPLOY_HASH=$(casper-client put-deploy \
+            --node-address "${{ secrets.CSPR_NODE_URL }}" \
+            --chain-name "${{ secrets.CSPR_CHAIN_NAME }}" \
+            --secret-key /tmp/secret_key.pem \
+            --payment-amount 250000000000 \
+            --session-path ./cep18.wasm \
+            --session-arg "name:string='SpectralToken'" \
+            --session-arg "symbol:string='SPT'" \
+            --session-arg "decimals:u8='9'" \
+            --session-arg "total_supply:u256='1000000000000000'" \
+            --session-arg "enable_mint_burn:bool='true'" \
+            --session-arg "admin_list:opt_string=null" \
+            --session-arg "minter_list:opt_string=null" \
+            | jq -r '.result.deploy_hash')
+          echo "deploy_hash=$DEPLOY_HASH" >> $GITHUB_OUTPUT
+          echo "CEP-18 deploy hash: $DEPLOY_HASH"
+
+      - name: Wait for CEP-18 finality
+        run: sleep 60
+
+      - name: Get CEP-18 contract hash
+        id: hash_cep18
+        run: |
+          RESULT=$(casper-client get-deploy \
+            --node-address "${{ secrets.CSPR_NODE_URL }}" \
+            ${{ steps.deploy_cep18.outputs.deploy_hash }})
+          CONTRACT_HASH=$(echo $RESULT | jq -r \
+            '.result.execution_results[0].result.Success.effect.transforms[] | select(.transform | has("WriteContract")) | .key')
+          echo "contract_hash=$CONTRACT_HASH" >> $GITHUB_OUTPUT
+          echo "CEP-18 contract hash: $CONTRACT_HASH"
+
+      - name: Print all contract hashes — paste these into your .env files
+        run: |
+          echo "============================================"
+          echo "ALL CONTRACTS DEPLOYED SUCCESSFULLY"
+          echo "============================================"
+          echo "CASPERFLOW_CONTRACT_HASH=${{ steps.hash_casperflow.outputs.contract_hash }}"
+          echo "REPUTATION_CONTRACT_HASH=${{ steps.hash_reputation.outputs.contract_hash }}"
+          echo "CEP18_CONTRACT_HASH=${{ steps.hash_cep18.outputs.contract_hash }}"
+          echo "CSPR_NODE_URL=${{ secrets.CSPR_NODE_URL }}"
+          echo "============================================"
+
+      - name: Shred secret key from runner
+        if: always()
+        run: shred -u /tmp/secret_key.pem
