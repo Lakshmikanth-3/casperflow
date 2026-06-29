@@ -1,0 +1,26 @@
+{
+  "name": "@casperflow/oracle-server",
+  "version": "1.0.0",
+  "description": "CasperFlow x402-protected oracle — serves Parking Blox revenue data from CSPR.cloud with per-call micropayment gating",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "@casper-ecosystem/casper-eip-712": "^1.0.0",
+    "axios": "^1.7.7",
+    "casper-js-sdk": "^2.15.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
+  }
+}

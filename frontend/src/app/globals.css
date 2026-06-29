@@ -1,0 +1,117 @@
+/* globals.css — CasperFlow Design System
+ * Palette: deep navy + electric teal (Casper brand)
+ * Font: Inter (Google Fonts)
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg:        #0A1628;
+  --color-surface:   #111827;
+  --color-surface2:  #1a2540;
+  --color-accent:    #00E5CC;
+  --color-accent2:   #00b8a9;
+  --color-text:      #F9FAFB;
+  --color-muted:     #6B7280;
+  --color-success:   #10B981;
+  --color-warning:   #F59E0B;
+  --color-error:     #EF4444;
+  --color-border:    #1F2937;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: "Inter", -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ── Agent status indicator animations ─────────────────────────────────────── */
+
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  50%       { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+}
+
+@keyframes spin-teal {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes glow-teal {
+  0%, 100% { box-shadow: 0 0 20px rgba(0, 229, 204, 0.15); }
+  50%       { box-shadow: 0 0 40px rgba(0, 229, 204, 0.35); }
+}
+
+@keyframes ticker-scroll {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-100%); }
+}
+
+/* ── Utility classes ────────────────────────────────────────────────────────── */
+
+.glass {
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.glow-accent {
+  animation: glow-teal 3s ease-in-out infinite;
+}
+
+.status-active {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--color-success);
+  animation: pulse-green 1.5s ease-in-out infinite;
+  display: inline-block;
+}
+
+.status-working {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--color-accent);
+  border-top-color: transparent;
+  animation: spin-teal 0.8s linear infinite;
+  display: inline-block;
+}
+
+.status-idle {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--color-warning);
+  display: inline-block;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* ── Tier badge colors ──────────────────────────────────────────────────────── */
+
+.tier-bronze   { color: #CD7F32; border-color: #CD7F32; }
+.tier-silver   { color: #C0C0C0; border-color: #C0C0C0; }
+.tier-gold     { color: #FFD700; border-color: #FFD700; }
+.tier-platinum { color: #00E5CC; border-color: #00E5CC; }
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: var(--color-surface); }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }

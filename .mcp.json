@@ -1,0 +1,28 @@
+# CasperFlow — Casper MCP Server Configuration
+# Used by agent to add the CSPR.cloud-hosted Casper MCP to Claude Code
+# Run these commands once per developer machine:
+#
+#   claude mcp add-json cspr_cloud_testnet --scope project \
+#     '{"type":"http","url":"https://mcp.testnet.cspr.cloud/mcp","headers":{"X-CSPR-Cloud-Api-Key":"${CSPR_CLOUD_API_KEY}"}}'
+#
+#   claude mcp add-json csprtrade --scope project \
+#     '{"type":"http","url":"https://mcp.cspr.trade"}'
+#
+# The .mcp.json below is the equivalent project-scoped config file.
+# Claude Code will ask you to approve project-scoped MCP servers before use.
+
+{
+  "mcpServers": {
+    "cspr_cloud_testnet": {
+      "type": "http",
+      "url": "https://mcp.testnet.cspr.cloud/mcp",
+      "headers": {
+        "X-CSPR-Cloud-Api-Key": "${CSPR_CLOUD_API_KEY}"
+      }
+    },
+    "csprtrade": {
+      "type": "http",
+      "url": "https://mcp.cspr.trade"
+    }
+  }
+}
