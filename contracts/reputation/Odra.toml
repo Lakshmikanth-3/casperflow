@@ -1,0 +1,7 @@
+[[contracts]]
+name = "casperflow_reputation"
+fqn = "casperflow_reputation::CasperFlowReputationContract"
+[networks.testnet]
+rpc_url = "https://rpc.testnet.cspr.live"
+chain_name = "casper-test"
+secret_key_path = "../../keys/secret_key.pem"

@@ -1,0 +1,22 @@
+[package]
+name = "casperflow-reputation"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "casperflow_reputation"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+odra = { version = "2.1.0", default-features = false }
+
+[dev-dependencies]
+
+[features]
+default = []
+
+[profile.release]
+codegen-units = 1
+opt-level = "z"
+overflow-checks = true
+panic = "abort"

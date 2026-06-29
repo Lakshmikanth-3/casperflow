@@ -1,0 +1,10 @@
+[workspace]
+members = [
+    "contracts/casperflow",
+    "contracts/reputation",
+]
+resolver = "2"
+
+[workspace.dependencies]
+odra = { version = "2.1.0" }
+odra-test = { version = "2.1.0" }
