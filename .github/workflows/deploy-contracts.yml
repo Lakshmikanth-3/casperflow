@@ -35,11 +35,11 @@ jobs:
         run: cargo install casper-client --locked
 
       - name: Compile casperflow contract
-        run: cargo odra build -b casper
+        run: cargo odra build
         working-directory: ./contracts/casperflow
 
       - name: Compile reputation contract
-        run: cargo odra build -b casper
+        run: cargo odra build
         working-directory: ./contracts/reputation
 
       - name: Download official CEP-18 wasm
@@ -155,4 +155,4 @@ jobs:
 
       - name: Shred secret key from runner
         if: always()
-        run: shred -u /tmp/secret_key.pem
+        run: shred -u /tmp/secret_key.pem || rm -f /tmp/secret_key.pem
